@@ -86,14 +86,33 @@ namespace WebApiBomberos.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Estado>> GetEstado(int id)
         {
-            var estado = await _context.Estado.FindAsync(id);
-
-            if (estado == null)
+            using (var DBcontext = _context)
             {
-                return NotFound();
-            }
+                try
+                {
+                    var obj = DBcontext.Estado.AsNoTracking().SingleOrDefault(r => r.id == id);
+                    if (obj != null)
+                    {
+                        res.dato = obj;
+                        res.code = "200";
+                        res.message = "Dato obtenido correctamente";
+                    }
+                    else if (obj == null)
+                    {
+                        res.dato = obj;
+                        res.code = "204";
+                        res.message = "No existen datos en la base de datos";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    res.error = "Error al obtener el dato " + ex.Message;
+                }
 
-            return estado;
+                data = JsonConvert.SerializeObject(res);
+
+                return Ok(data);
+            }
         }
 
         // PUT: api/Estado/5
@@ -101,57 +120,124 @@ namespace WebApiBomberos.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEstado(int id, Estado estado)
         {
-            if (id != estado.id)
+            using (var DBcontext = _context)
             {
-                return BadRequest();
-            }
-
-            _context.Entry(estado).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EstadoExists(id))
+                try
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+                    var obj = DBcontext.Estado.FirstOrDefault(r => r.id == id);
+                    if (obj != null)
+                    {
+                        obj.nombre = estado.nombre;
 
-            return NoContent();
+                        DBcontext.Entry(obj).State = EntityState.Modified;
+                        await DBcontext.SaveChangesAsync();
+
+                        res.dato = obj;
+                        res.code = "200";
+                        res.message = "Dato modificado correctamente";
+                    }
+                    else if (obj == null)
+                    {
+                        res.code = "204";
+                        res.message = "No existen datos en la base de datos";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    res.error = "Error al obtener el dato " + ex.Message;
+                }
+
+                data = JsonConvert.SerializeObject(res);
+
+                return Ok(data);
+            }
         }
 
         // POST: api/Estado
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Estado>> PostEstado(Estado estado)
-        {
-            _context.Estado.Add(estado);
-            await _context.SaveChangesAsync();
+        {            
+            using (var DBcontext = _context)
+            {
+                try
+                {
+                    var verificar = DBcontext.Estado.SingleOrDefault(r => r.nombre == estado.nombre);
 
-            return CreatedAtAction("GetEstado", new { id = estado.id }, estado);
+                    if (verificar == null)
+                    {
+                        Estado obj = new Estado();
+                        obj.nombre = estado.nombre;
+                        obj.activo = true;
+
+                        DBcontext.Estado.Add(obj);
+                        await DBcontext.SaveChangesAsync();
+
+                        res.code = "200";
+                        res.message = "Dato insertado correctamente";
+                    }
+                    else
+                    {
+                        res.code = "204";
+                        res.message = "El dato ingresado ya existe en la base de datos";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    res.code = "500";
+                    res.message = "No se pudo insertar los datos en la base de datos";
+                    res.error = "Error al insertar el dato " + ex.Message;
+                }
+
+                data = JsonConvert.SerializeObject(res);
+
+                return Ok(data);
+            }
         }
 
         // DELETE: api/Estado/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEstado(int id)
         {
-            var estado = await _context.Estado.FindAsync(id);
-            if (estado == null)
+            using (var DBcontext = _context)
             {
-                return NotFound();
+                try
+                {
+                    var obj = DBcontext.Estado.SingleOrDefault(r => r.id == id);
+
+                    if (obj != null)
+                    {
+                        //baja logica
+                        //entidad entity = DBcontext.entidad.SingleOrDefault(r => r.id == id);
+                        obj.activo = false;
+                        //DBcontext.Entry(entidad).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                        //await DBcontext.SaveChangesAsync();
+
+                        //baja eliminar BD
+                        // rol r = DBcontext.rol.Single(us => us.id == id);
+                        DBcontext.Remove(obj);
+                        await DBcontext.SaveChangesAsync();
+
+                        res.code = "200";
+                        res.message = "Dato eliminado correctamente";
+                    }
+                    else
+                    {
+                        res.code = "204";
+                        res.message = "No se pudo eliminar los datos de la base de datos";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    res.code = "500";
+                    res.message = "No se pudo eliminar el dato de la base de datos";
+                    res.error = "Error al insertar el dato " + ex.Message;
+                }
+
+                data = JsonConvert.SerializeObject(res);
+
+                return Ok(data);
             }
-
-            _context.Estado.Remove(estado);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
         private bool EstadoExists(int id)
