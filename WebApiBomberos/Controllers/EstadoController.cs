@@ -5,6 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Newtonsoft.Json;
+using WebApiBomberos.Component;
+using WebApiBomberos.components;
+using WebApiBomberos.Components;
 using WebApiBomberos.Data;
 using WebApiBomberos.Models;
 
@@ -15,17 +20,66 @@ namespace WebApiBomberos.Controllers
     public class EstadoController : ControllerBase
     {
         private readonly WebApiBomberosContext _context;
+        public Result<Estado> res = new Result<Estado>();
+        string data;
 
+        private readonly IConfiguration configuration;
         public EstadoController(WebApiBomberosContext context)
         {
             _context = context;
         }
 
         // GET: api/Estado
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Estado>>> GetEstado()
+        // GET: api/Calle
+        [HttpGet("paginate/{pagina},{cantidad},{nombre}")]
+        public async Task<ActionResult<Result<Estado>>> GetCalle(int pagina, int cantidad, string nombre)
         {
-            return await _context.Estado.ToListAsync();
+            Paginate paginate = new Paginate();
+            paginate.cantidadMostrar = cantidad;
+            paginate.pagina = pagina;
+
+            using (var DBcontext = _context)
+            {
+                try
+                {
+                    var queryable = DBcontext.Estado.AsNoTracking().AsQueryable();
+
+                    // Agregar condición para búsqueda por nombre si el parámetro nombre no es nulo ni vacío
+                    if (!string.IsNullOrEmpty(nombre))
+                    {
+                        queryable = queryable.Where(e => e.nombre.Contains(nombre));
+                    }
+
+                    double conteo = await queryable.CountAsync();
+                    double TotalPaginas = Math.Ceiling(conteo / paginate.cantidadMostrar);
+
+                    int totalPaginas = Convert.ToInt32(TotalPaginas);
+                    int totalRegistros = Convert.ToInt32(conteo);
+
+                    if (queryable.Any())
+                    {
+                        res.data = queryable.Paginar(paginate).ToList();
+                        res.totalRegistros = totalRegistros;
+                        res.totalPaginas = totalPaginas;
+                        res.code = "200";
+                        res.message = "Datos obtenidos correctamente";
+                    }
+                    else
+                    {
+                        res.code = "204";
+                        res.message = "No existen datos que coincidan con la búsqueda";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    res.error = "Error al obtener el dato " + ex.Message;
+                }
+
+
+                data = JsonConvert.SerializeObject(res);
+
+                return Ok(data);
+            }
         }
 
         // GET: api/Estado/5
