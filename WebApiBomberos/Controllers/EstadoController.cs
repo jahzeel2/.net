@@ -20,6 +20,7 @@ namespace WebApiBomberos.Controllers
     public class EstadoController : ControllerBase
     {
         private readonly WebApiBomberosContext _context;
+
         public Result<Estado> res = new Result<Estado>();
         string data;
 
