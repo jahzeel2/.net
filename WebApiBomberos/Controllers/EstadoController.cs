@@ -98,7 +98,7 @@ namespace WebApiBomberos.Controllers
                         res.code = "200";
                         res.message = "Dato obtenido correctamente";
                     }
-                    else if (obj == null)
+                    else if (obj is null)
                     {
                         res.dato = obj;
                         res.code = "204";
