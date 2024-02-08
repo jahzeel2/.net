@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using WebApiBomberos.Component;
 using WebApiBomberos.components;
@@ -17,22 +16,22 @@ namespace WebApiBomberos.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EstadoController : ControllerBase
+    public class CategoriaController : ControllerBase
     {
         private readonly WebApiBomberosContext _context;
-
-        public Result<Estado> res = new Result<Estado>();
+        public Result<Categoria> res = new Result<Categoria>();
         string data;
 
         private readonly IConfiguration configuration;
-        public EstadoController(WebApiBomberosContext context)
+
+        public CategoriaController(WebApiBomberosContext context)
         {
             _context = context;
         }
 
-        // GET: api/Estado
-        [HttpGet("paginate/{pagina},{cantidad},{nombre}")]
-        public async Task<ActionResult<Result<Estado>>> GetCalle(int pagina, int cantidad, string nombre)
+        // GET: api/Categoria
+        [HttpGet("paginate/{pagina},{cantidad},{descripcion}")]
+        public async Task<ActionResult<Result<Categoria>>> GetCalle(int pagina, int cantidad, string descripcion)
         {
             Paginate paginate = new Paginate();
             paginate.cantidadMostrar = cantidad;
@@ -42,12 +41,12 @@ namespace WebApiBomberos.Controllers
             {
                 try
                 {
-                    var queryable = DBcontext.Estado.AsNoTracking().AsQueryable();
+                    var queryable = DBcontext.Categoria.AsNoTracking().AsQueryable();
 
                     // Agregar condición para búsqueda por nombre si el parámetro nombre no es nulo ni vacío
-                    if (!string.IsNullOrEmpty(nombre))
+                    if (!string.IsNullOrEmpty(descripcion))
                     {
-                        queryable = queryable.Where(e => e.nombre.Contains(nombre));
+                        queryable = queryable.Where(e => e.descripcion.Contains(descripcion));
                     }
 
                     double conteo = await queryable.CountAsync();
@@ -72,6 +71,7 @@ namespace WebApiBomberos.Controllers
                 }
                 catch (Exception ex)
                 {
+                    res.code = "500";
                     res.error = "Error al obtener el dato " + ex.Message;
                 }
 
@@ -82,15 +82,16 @@ namespace WebApiBomberos.Controllers
             }
         }
 
-        // GET: api/Estado/5
+
+        // GET: api/Categoria/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Estado>> GetEstado(int id)
+        public async Task<ActionResult<Categoria>> GetCategoria(int id)
         {
             using (var DBcontext = _context)
             {
                 try
                 {
-                    var obj = DBcontext.Estado.AsNoTracking().SingleOrDefault(r => r.id == id);
+                    var obj = DBcontext.Categoria.AsNoTracking().SingleOrDefault(r => r.id == id);
                     if (obj != null)
                     {
                         res.dato = obj;
@@ -106,6 +107,7 @@ namespace WebApiBomberos.Controllers
                 }
                 catch (Exception ex)
                 {
+                    res.code = "500";
                     res.error = "Error al obtener el dato " + ex.Message;
                 }
 
@@ -115,19 +117,20 @@ namespace WebApiBomberos.Controllers
             }
         }
 
-        // PUT: api/Estado/5
+
+        // PUT: api/Categoria/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEstado(int id, Estado estado)
+        public async Task<IActionResult> PutCategoria(int id, Categoria categoria)
         {
             using (var DBcontext = _context)
             {
                 try
                 {
-                    var obj = DBcontext.Estado.FirstOrDefault(r => r.id == id);
+                    var obj = DBcontext.Categoria.FirstOrDefault(r => r.id == id);
                     if (obj != null)
                     {
-                        obj.nombre = estado.nombre;
+                        obj.descripcion = categoria.nombre;
 
                         DBcontext.Entry(obj).State = EntityState.Modified;
                         await DBcontext.SaveChangesAsync();
@@ -144,6 +147,7 @@ namespace WebApiBomberos.Controllers
                 }
                 catch (Exception ex)
                 {
+                    res.code = "500";
                     res.error = "Error al obtener el dato " + ex.Message;
                 }
 
@@ -153,11 +157,11 @@ namespace WebApiBomberos.Controllers
             }
         }
 
-        // POST: api/Estado
+        // POST: api/Categoria
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Estado>> PostEstado(Estado estado)
-        {            
+        {
             using (var DBcontext = _context)
             {
                 try
@@ -195,54 +199,26 @@ namespace WebApiBomberos.Controllers
             }
         }
 
-        // DELETE: api/Estado/5
+
+        // DELETE: api/Categoria/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEstado(int id)
+        public async Task<IActionResult> DeleteCategoria(int id)
         {
-            using (var DBcontext = _context)
+            var categoria = await _context.Categoria.FindAsync(id);
+            if (categoria == null)
             {
-                try
-                {
-                    var obj = DBcontext.Estado.SingleOrDefault(r => r.id == id);
-
-                    if (obj != null)
-                    {
-                        //baja logica
-                        //entidad entity = DBcontext.entidad.SingleOrDefault(r => r.id == id);
-                        obj.activo = false;
-                        //DBcontext.Entry(entidad).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                        //await DBcontext.SaveChangesAsync();
-
-                        //baja eliminar BD
-                        // rol r = DBcontext.rol.Single(us => us.id == id);
-                        DBcontext.Remove(obj);
-                        await DBcontext.SaveChangesAsync();
-
-                        res.code = "200";
-                        res.message = "Dato eliminado correctamente";
-                    }
-                    else
-                    {
-                        res.code = "204";
-                        res.message = "No se pudo eliminar los datos de la base de datos";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    res.code = "500";
-                    res.message = "No se pudo eliminar el dato de la base de datos";
-                    res.error = "Error al insertar el dato " + ex.Message;
-                }
-
-                data = JsonConvert.SerializeObject(res);
-
-                return Ok(data);
+                return NotFound();
             }
+
+            _context.Categoria.Remove(categoria);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
-        private bool EstadoExists(int id)
+        private bool CategoriaExists(int id)
         {
-            return _context.Estado.Any(e => e.id == id);
+            return _context.Categoria.Any(e => e.id == id);
         }
     }
 }

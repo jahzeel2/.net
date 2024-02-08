@@ -17,5 +17,7 @@ namespace WebApiBomberos.Data
         public DbSet<WebApiBomberos.Models.Estado> Estado { get; set; } = default!;
 
         public DbSet<WebApiBomberos.Models.TipoServicio> TipoServicio { get; set; }
+
+        public DbSet<WebApiBomberos.Models.Categoria> Categoria { get; set; }
     }
 }
