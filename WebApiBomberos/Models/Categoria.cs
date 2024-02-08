@@ -16,5 +16,7 @@ namespace WebApiBomberos.Models
         public string categoria { get; set; }
         [Required]
         public int unidadFiscal { get; set; }
+        [Required]
+        public Boolean activo { get; set; }
     }
 }

@@ -11,5 +11,7 @@ namespace WebApiBomberos.Models
         [StringLength(75)]
         [Required]
         public string descripcion { get; set; }
+        [Required]
+        public Boolean activo { get; set; }
     }
 }

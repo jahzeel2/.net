@@ -29,6 +29,8 @@ namespace WebApiBomberos.Models
         public string? telFijo { get; set; }
         [StringLength(20)]
         public string? celular { get; set; }
+        [Required]
+        public Boolean activo { get; set; }
 
 
         [ForeignKey("localidad")]

@@ -33,7 +33,7 @@ namespace WebApiBomberos.Models
         public DateTime? fechaBaja { get; set; }
         public int? usuarioBaja { get; set; }
         [Required]
-        public int activo { get; set; }
+        public Boolean activo { get; set; }
 
         [ForeignKey("localidad")]
         public virtual Localidad? localLocalidadRelacion { get; set; }

@@ -20,6 +20,8 @@ namespace WebApiBomberos.Models
         public DateTime? fechaVto { get; set; }
         [StringLength(100)]
         public string? observaciones { get; set; }
+        [Required]
+        public Boolean activo { get; set; }
 
         [ForeignKey("localSolicitante")]
         public virtual Locales? LocalRelacion { get; set; }

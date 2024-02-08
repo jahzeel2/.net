@@ -11,5 +11,7 @@ namespace WebApiBomberos.Models
         public int codigo { get; set; }
         [StringLength(50)]
         public string funcion { get; set; }
+        [Required]
+        public Boolean activo { get; set; }
     }
 }
